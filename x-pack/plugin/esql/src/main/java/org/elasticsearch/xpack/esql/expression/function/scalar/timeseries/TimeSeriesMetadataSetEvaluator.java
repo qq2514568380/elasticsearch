@@ -30,17 +30,20 @@ final class TimeSeriesMetadataSetEvaluator extends AbstractTimeSeriesMetadataFun
     private static final long BASE_RAM_BYTES_USED = RamUsageEstimator.shallowSizeOfInstance(TimeSeriesMetadataSetEvaluator.class);
 
     private final ExpressionEvaluator labelContainer;
+    private final boolean keyword;
     private final String label;
     private final ExpressionEvaluator value;
 
     TimeSeriesMetadataSetEvaluator(
         DriverContext driverContext,
         ExpressionEvaluator labelContainer,
+        boolean keyword,
         String label,
         ExpressionEvaluator value
     ) {
-        super(driverContext, labelContainer, value);
+        super(driverContext, labelContainer, keyword, value);
         this.labelContainer = labelContainer;
+        this.keyword = keyword;
         this.label = label;
         this.value = value;
     }
@@ -109,24 +112,32 @@ final class TimeSeriesMetadataSetEvaluator extends AbstractTimeSeriesMetadataFun
 
     @Override
     public String toString() {
-        return describe(labelContainer, label, value);
+        return describe(labelContainer, keyword, label, value);
     }
 
-    private static String describe(Object labelContainer, String label, Object value) {
-        return "TimeSeriesMetadataSetEvaluator[labelContainer=" + labelContainer + ", label=" + label + ", value=" + value + "]";
+    private static String describe(Object labelContainer, boolean keyword, String label, Object value) {
+        return "TimeSeriesMetadataSetEvaluator[labelContainer="
+            + labelContainer
+            + ", keyword="
+            + keyword
+            + ", label="
+            + label
+            + ", value="
+            + value
+            + "]";
     }
 
-    record Factory(ExpressionEvaluator.Factory labelContainer, String label, ExpressionEvaluator.Factory value)
+    record Factory(ExpressionEvaluator.Factory labelContainer, boolean keyword, String label, ExpressionEvaluator.Factory value)
         implements
             ExpressionEvaluator.Factory {
         @Override
         public ExpressionEvaluator get(DriverContext context) {
-            return new TimeSeriesMetadataSetEvaluator(context, labelContainer.get(context), label, value.get(context));
+            return new TimeSeriesMetadataSetEvaluator(context, labelContainer.get(context), keyword, label, value.get(context));
         }
 
         @Override
         public String toString() {
-            return describe(labelContainer, label, value);
+            return describe(labelContainer, keyword, label, value);
         }
     }
 }

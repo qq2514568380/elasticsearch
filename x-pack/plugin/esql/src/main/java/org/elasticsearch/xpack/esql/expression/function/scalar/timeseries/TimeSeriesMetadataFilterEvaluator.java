@@ -29,17 +29,20 @@ final class TimeSeriesMetadataFilterEvaluator extends AbstractTimeSeriesMetadata
     private static final long BASE_RAM_BYTES_USED = RamUsageEstimator.shallowSizeOfInstance(TimeSeriesMetadataFilterEvaluator.class);
 
     private final ExpressionEvaluator labelContainer;
+    private final boolean keyword;
     private final List<String> labels;
     private final boolean exclude;
 
     TimeSeriesMetadataFilterEvaluator(
         DriverContext driverContext,
         ExpressionEvaluator labelContainer,
+        boolean keyword,
         List<String> labels,
         boolean exclude
     ) {
-        super(driverContext, labelContainer);
+        super(driverContext, labelContainer, keyword);
         this.labelContainer = labelContainer;
+        this.keyword = keyword;
         this.labels = labels;
         this.exclude = exclude;
     }
@@ -86,24 +89,32 @@ final class TimeSeriesMetadataFilterEvaluator extends AbstractTimeSeriesMetadata
 
     @Override
     public String toString() {
-        return describe(labelContainer, labels, exclude);
+        return describe(labelContainer, keyword, labels, exclude);
     }
 
-    private static String describe(Object labelContainer, List<String> labels, boolean exclude) {
-        return "TimeSeriesMetadataFilterEvaluator[labelContainer=" + labelContainer + ", labels=" + labels + ", exclude=" + exclude + "]";
+    private static String describe(Object labelContainer, boolean keyword, List<String> labels, boolean exclude) {
+        return "TimeSeriesMetadataFilterEvaluator[labelContainer="
+            + labelContainer
+            + ", keyword="
+            + keyword
+            + ", labels="
+            + labels
+            + ", exclude="
+            + exclude
+            + "]";
     }
 
-    record Factory(ExpressionEvaluator.Factory labelContainer, List<String> labels, boolean exclude)
+    record Factory(ExpressionEvaluator.Factory labelContainer, boolean keyword, List<String> labels, boolean exclude)
         implements
             ExpressionEvaluator.Factory {
         @Override
         public ExpressionEvaluator get(DriverContext context) {
-            return new TimeSeriesMetadataFilterEvaluator(context, labelContainer.get(context), labels, exclude);
+            return new TimeSeriesMetadataFilterEvaluator(context, labelContainer.get(context), keyword, labels, exclude);
         }
 
         @Override
         public String toString() {
-            return describe(labelContainer, labels, exclude);
+            return describe(labelContainer, keyword, labels, exclude);
         }
     }
 }

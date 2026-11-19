@@ -24,11 +24,13 @@ final class TimeSeriesMetadataPathEvaluator extends AbstractTimeSeriesMetadataFu
     private static final long BASE_RAM_BYTES_USED = RamUsageEstimator.shallowSizeOfInstance(TimeSeriesMetadataPathEvaluator.class);
 
     private final ExpressionEvaluator labelContainer;
+    private final boolean keyword;
     private final String label;
 
-    TimeSeriesMetadataPathEvaluator(DriverContext driverContext, ExpressionEvaluator labelContainer, String label) {
-        super(driverContext, labelContainer);
+    TimeSeriesMetadataPathEvaluator(DriverContext driverContext, ExpressionEvaluator labelContainer, boolean keyword, String label) {
+        super(driverContext, labelContainer, keyword);
         this.labelContainer = labelContainer;
+        this.keyword = keyword;
         this.label = label;
     }
 
@@ -71,18 +73,22 @@ final class TimeSeriesMetadataPathEvaluator extends AbstractTimeSeriesMetadataFu
 
     @Override
     public String toString() {
-        return "TimeSeriesMetadataPathEvaluator[labelContainer=" + labelContainer + ", label=" + label + "]";
+        return describe(labelContainer, keyword, label);
     }
 
-    record Factory(ExpressionEvaluator.Factory labelContainer, String label) implements ExpressionEvaluator.Factory {
+    private static String describe(Object labelContainer, boolean keyword, String label) {
+        return "TimeSeriesMetadataPathEvaluator[labelContainer=" + labelContainer + ", keyword=" + keyword + ", label=" + label + "]";
+    }
+
+    record Factory(ExpressionEvaluator.Factory labelContainer, boolean keyword, String label) implements ExpressionEvaluator.Factory {
         @Override
         public ExpressionEvaluator get(DriverContext context) {
-            return new TimeSeriesMetadataPathEvaluator(context, labelContainer.get(context), label);
+            return new TimeSeriesMetadataPathEvaluator(context, labelContainer.get(context), keyword, label);
         }
 
         @Override
         public String toString() {
-            return "TimeSeriesMetadataPathEvaluator[labelContainer=" + labelContainer + ", label=" + label + "]";
+            return describe(labelContainer, keyword, label);
         }
     }
 }

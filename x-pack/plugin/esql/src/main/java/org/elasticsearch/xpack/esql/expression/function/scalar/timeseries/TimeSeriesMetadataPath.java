@@ -50,6 +50,7 @@ public final class TimeSeriesMetadataPath extends AbstractTimeSeriesMetadataFunc
     public ExpressionEvaluator.Factory toEvaluator(ToEvaluator toEvaluator) {
         return new TimeSeriesMetadataPathEvaluator.Factory(
             toEvaluator.apply(children().get(0)),
+            containerType() == DataType.KEYWORD,
             foldLabelName(children().get(1), toEvaluator)
         );
     }

@@ -61,13 +61,14 @@ public final class TimeSeriesMetadataFilter extends AbstractTimeSeriesMetadataFu
 
     @Override
     public DataType dataType() {
-        return DataType.TIME_SERIES_METADATA_DATA_TYPE;
+        return containerType();
     }
 
     @Override
     public ExpressionEvaluator.Factory toEvaluator(ToEvaluator toEvaluator) {
         return new TimeSeriesMetadataFilterEvaluator.Factory(
             toEvaluator.apply(children().getFirst()),
+            containerType() == DataType.KEYWORD,
             labels().stream().map(label -> foldLabelName(label, toEvaluator)).toList(),
             exclude
         );
