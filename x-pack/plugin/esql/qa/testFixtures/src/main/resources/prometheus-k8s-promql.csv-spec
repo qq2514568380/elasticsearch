@@ -1,7 +1,7 @@
 // The PromQL tests of `k8s-timeseries-promql.csv-spec` over `index=k8s`, run on `prometheus-k8s`: the same samples in the Prometheus
 // remote-write layout (one document per sample, `labels.*` dimensions including `__name__`, one
 // `metrics.<name>` field per metric). Queries are identical up to the index name; `_timeseries` carries
-// the labels under `labels`, with `__name__` where Prometheus keeps the metric name. Keep in sync with the
+// the labels by their PromQL names, with `__name__` where Prometheus keeps the metric name. Keep in sync with the
 // source file.
 
 // Contains tests for functionality that's PromQL specific.
