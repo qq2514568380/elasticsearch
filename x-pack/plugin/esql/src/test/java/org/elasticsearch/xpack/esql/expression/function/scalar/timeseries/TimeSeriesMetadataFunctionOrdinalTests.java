@@ -32,7 +32,6 @@ import org.elasticsearch.xpack.esql.core.type.DataType;
 import org.elasticsearch.xpack.esql.core.type.EsField;
 import org.elasticsearch.xpack.esql.expression.function.AbstractScalarFunctionTestCase;
 import org.junit.After;
-import org.junit.BeforeClass;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,15 +54,14 @@ public class TimeSeriesMetadataFunctionOrdinalTests extends ESTestCase {
         "{\"cluster\":\"prod\",\"pod\":\"one\"}",
         "{\"cluster\":\"prod\",\"pod\":\"two\"}",
         "{\"cluster\":\"qa\",\"pod\":\"three\"}" };
+    private static final String[] KEYWORD_CONTAINERS = {
+        "{\"pod\":\"one\",\"cluster\":\"prod\"}",
+        "{\"pod\":\"two\",\"cluster\":\"prod\"}",
+        "{\"cluster\":\"qa\",\"pod\":\"three\"}" };
     /** 15 rows over 3 entries: dense. */
     private static final Integer[] DENSE = { 0, 1, 0, 2, 1, 0, 1, 2, 0, 0, 1, 2, 2, 0, 1 };
 
     private final List<CircuitBreaker> breakers = Collections.synchronizedList(new ArrayList<>());
-
-    @BeforeClass
-    public static void requireTimeSeriesType() {
-        assumeTrue("_timeseries is under construction", DataType.TIME_SERIES_METADATA_DATA_TYPE.supportedVersion().supportedLocally());
-    }
 
     public void testReadReusesOrdinals() {
         assertDictionaryPath(c -> new TimeSeriesMetadataPath(Source.EMPTY, c, keyword("pod")), CONTAINERS, DENSE, true);
@@ -128,6 +126,27 @@ public class TimeSeriesMetadataFunctionOrdinalTests extends ESTestCase {
         assertDictionaryPath(c -> new TimeSeriesMetadataPath(Source.EMPTY, c, keyword("pod")), CONTAINERS, ordinals, false);
     }
 
+    public void testKeywordReadReusesOrdinals() {
+        // A keyword _timeseries is the source's JSON object, in the source's order: each entry is read into the canonical form.
+        assertDictionaryPath(
+            DataType.KEYWORD,
+            c -> new TimeSeriesMetadataPath(Source.EMPTY, c, keyword("pod")),
+            KEYWORD_CONTAINERS,
+            DENSE,
+            true
+        );
+    }
+
+    public void testKeywordDropReusesOrdinals() {
+        assertDictionaryPath(
+            DataType.KEYWORD,
+            c -> new TimeSeriesMetadataFilter(Source.EMPTY, c, List.of(keyword("pod")), true),
+            KEYWORD_CONTAINERS,
+            DENSE,
+            true
+        );
+    }
+
     public void testSparseKeepsRows() {
         Integer[] ordinals = { 0, 1, 2 };
         assertDictionaryPath(c -> new TimeSeriesMetadataPath(Source.EMPTY, c, keyword("pod")), CONTAINERS, ordinals, false);
@@ -143,7 +162,19 @@ public class TimeSeriesMetadataFunctionOrdinalTests extends ESTestCase {
         Integer[] ordinals,
         boolean reusesOrdinals
     ) {
-        Expression expression = function.apply(field("labels", DataType.TIME_SERIES_METADATA_DATA_TYPE));
+        assumeTrue("_timeseries is under construction", DataType.TIME_SERIES_METADATA_DATA_TYPE.supportedVersion().supportedLocally());
+        assertDictionaryPath(DataType.TIME_SERIES_METADATA_DATA_TYPE, function, dictionary, ordinals, reusesOrdinals);
+    }
+
+    /** As above, over label containers of {@code type}. */
+    private void assertDictionaryPath(
+        DataType type,
+        Function<Expression, Expression> function,
+        String[] dictionary,
+        Integer[] ordinals,
+        boolean reusesOrdinals
+    ) {
+        Expression expression = function.apply(field("labels", type));
         String[] rows = new String[ordinals.length];
         for (int p = 0; p < ordinals.length; p++) {
             rows[p] = ordinals[p] == null ? null : dictionary[ordinals[p]];
